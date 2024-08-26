@@ -3,10 +3,10 @@ from datetime import datetime
 
 # AlloyDB connection details (replace with your actual values)
 conn = psycopg2.connect(
-    host="10.34.1.2",
+    host="<IP Address>",
     database="ssb",
     user="postgres",
-    password="sarunsingla"
+    password="<password>"
 )
 
 cursor = conn.cursor()
