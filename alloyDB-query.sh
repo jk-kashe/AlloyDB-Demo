@@ -1,7 +1,7 @@
 #!/bin/bash
 
-psql -h 10.34.1.9 -U postgres -d ssb -c "select google_columnar_engine_drop('lineorder')" -o rec.out 
-psql -h 10.34.1.9 -U postgres -d ssb -c "select google_columnar_engine_reset_recommendation(drop_columns => true)" -o rec.out 
+psql -h <private IP of read replica> -U postgres -d ssb -c "select google_columnar_engine_drop('lineorder')" -o rec.out 
+psql -h <private IP of read replica> -U postgres -d ssb -c "select google_columnar_engine_reset_recommendation(drop_columns => true)" -o rec.out 
 
 sleep 2
 
@@ -19,7 +19,7 @@ do
   ts=$(date +%s)
   echo "$ts"
   if [ $i -eq 1 ]; then
-    psql -h 10.34.1.9 -U postgres -d ssb -c "select google_columnar_engine_recommend()" -o rec.out &
+    psql -h <private IP of read replica> -U postgres -d ssb -c "select google_columnar_engine_recommend()" -o rec.out &
   fi
   echo -e "\n"
 done
