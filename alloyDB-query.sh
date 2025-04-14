@@ -1,7 +1,7 @@
 #!/bin/bash
 
-psql -h <private IP of read replica> -U postgres -d ssb -c "select google_columnar_engine_drop('lineorder')" -o rec.out 
-psql -h <private IP of read replica> -U postgres -d ssb -c "select google_columnar_engine_reset_recommendation(drop_columns => true)" -o rec.out 
+psql -U postgres -d ssb -c "select google_columnar_engine_drop('lineorder')" -o rec.out 
+psql -U postgres -d ssb -c "select google_columnar_engine_reset_recommendation(drop_columns => true)" -o rec.out 
 
 sleep 2
 
@@ -11,13 +11,14 @@ start=$(date +%s)
 
 for i in {1..100000}
 do
+  echo "--- Iteration $i ---"
   start=$(date +%s%3N)
-  psql -h <private IP of read replica> -U postgres -d ssb -f /home/sarunsingla/s64da-benchmark-toolkit/benchmarks/ssb/queries/Q1.3.sql 
+  psql -U postgres -d ssb -f ../s64da-benchmark-toolkit/benchmarks/ssb/queries/Q1.3.sql 
   end=$(date +%s%3N)
   difference=$((end - start))
-  echo "$difference"
+  echo "Query Duration (ms): $difference" 
   ts=$(date +%s)
-  echo "$ts"
+  #echo "$ts"
   if [ $i -eq 1 ]; then
     psql -h <private IP of read replica> -U postgres -d ssb -c "select google_columnar_engine_recommend()" -o rec.out &
   fi
