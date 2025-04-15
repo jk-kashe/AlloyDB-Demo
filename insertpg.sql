@@ -1,7 +1,7 @@
 DO
 $do$
 DECLARE
-  max_rows INTEGER := 100000;
+  max_rows INTEGER := 1000000;
 BEGIN
   WHILE max_rows > 0 LOOP
     insert into lineorder (
