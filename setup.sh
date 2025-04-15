@@ -9,6 +9,10 @@ else
 fi
 sudo apt install -y git python3-dateutil python3-natsort python3-pandas python3-psycopg2 python3-tabulate python3-sqlparse
 
+ORIGINAL_PWD=$(pwd)
 cd ../s64da-benchmark-toolkit
 source ~/pgauth.env
 ./prepare_benchmark  --dsn postgresql://postgres@$PGHOST/ssb --benchmark=ssb --schema=psql_native --scale-factor=10
+
+cd "$ORIGINAL_PWD"
+psql -d ssb -f init.sql
