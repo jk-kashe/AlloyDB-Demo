@@ -67,7 +67,7 @@ Note: run below line to init your shell(s)
 
 ```bash
 ~/source pgauth.env
-'''
+```
 
 1.  **Console 1 (Start Write Load):**
     * **Action:** Begin simulating continuous data ingestion (e.g., new orders) by running parallel insert workers against the primary instance.
