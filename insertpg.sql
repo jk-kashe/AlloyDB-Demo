@@ -24,7 +24,7 @@ BEGIN
     ) values(1,73801,374973,9241,19940207,'5-LOW',0,30,614388,11435375,6,565236,122877,7,19940629,'RAIL');    
     commit;
     max_rows := max_rows - 1;
-    RAISE NOTICE 'new order#: %', lo_orderkey;
+    RAISE NOTICE 'new order' --, lo_orderkey;
     -- PERFORM pg_sleep(1);
   END LOOP;
 END
