@@ -1,54 +1,116 @@
-## AlloyDB 
-AlloyDB is a fully managed, PostgreSQL-compatible database service on Google Cloud. It's designed to handle demanding enterprise workloads that require high performance, scalability, and availability. 
-Think of it as PostgreSQL, supercharged!
-### Columnar Engine
-AlloyDB's columnar engine dramatically speeds up analytical queries by storing data in a columnar format, unlike traditional row-based databases. 
-This means all the values for a single column are stored together, making it much more efficient for analytical queries that typically scan many rows but only require a few columns.  
-Furthermore, it keeps frequently used data in memory and uses machine learning to automatically select the columns that benefit most from this format, eliminating manual tuning.  
-Seamlessly integrated with AlloyDB's PostgreSQL engine, it allows you to run analytical queries using standard SQL, with AlloyDB automatically utilizing the columnar engine when it provides a performance advantage.
+# AlloyDB Demo: Read Pools and Columnar Engine
 
-### AlloyDB and Looker Setup Instructions
-* Create an AlloyDB primary instance 4 cpu 32GB and a read pool instance.
-  * Get the private IP address
-* Create a client VM under “Compute Engine” in the cloud console to run scripts and setup AlloyDB Auth proxy.
-  * Create a firewall rule to allow connections
-    * VPC network->firewall->Create firewall rule
-      * Give a name 
-      * Targets -> all instances in network
-      * Source IPV4 ranges - 0.0.0.0/0
-      * Protocols and ports - allow all
-      * Create
-  Remember to allowlist the IP of the VM in AlloyDB allowed instances on the read pool.
-  Try ssh to the client VM. Might take a few minutes for the above firewall rule to kick in.
-* Once ssh’d into the client VM, install the modules on the client VM and the postgresql client.
-* Download the github to run star schema Benchmark
-  * git clone https://github.com/swarm64/s64da-benchmark-toolkit
-* Now run the below command to Setup before connecting and generate the required data.
-   * `cd s64da-benchmark-toolkit` 
-   * ``./prepare_benchmark  --dsn postgresql://postgres@<IP of the primary alloyDB Instance>/ssb --benchmark=ssb --schema=psql_native --scale-factor=1000``
-   * Follow the above command and other steps on the benchmark toolkit to generate ssb 
- 	database in AlloyDB.
-* To build a Looker dashboard we need to run AlloyDb Auth Proxy on the VM created. Download the Auth Proxy client
-   * `wget https://storage.googleapis.com/alloydb-auth-proxy/v1.10.2/alloydb-auth-proxy.linux.amd64 -O alloydb-auth-proxy`
-* Run the AlloyDB Auth Proxy client on the VM
-   * `./alloydb-auth-proxy <Connection URI for the primary/read instance> --credentials-file service_account.json --address "<public IP of the instance>" -p 5433 --auto-iam-authn`
+## AlloyDB Overview
 
-### Running the Benchmark Scripts
-* Clone the repo here to start running the benchmark scripts
-  `git clone https://github.com/sarunsingla11722/AlloyDB-Demo.git`
-#### We have a few custom scripts here:
-* **Insertpg.sql** - insert loop that adds orders into the PG database. 
-* **alloy-table-looker.py** - Creates query_results table in AlloyDB and stores the real time query runtimes.
-* **alloyDB-query.sh** -The script begins by dropping any existing columnar storage optimizations for the 'lineorder' table and resetting any columnar storage recommendations. It then enters a loop, executing the query 100,000 times and recording each execution time. On the first iteration, it also triggers a background process to generate recommendations for columnar storage optimization based on the query workload.The script's output includes the execution time for each query run and timestamps, which can be used to analyze performance trends and identify potential bottlenecks or areas for improvement.
+AlloyDB for PostgreSQL is a fully managed, PostgreSQL-compatible database service available on Google Cloud. It's specifically engineered to handle demanding, enterprise-grade workloads that require exceptional performance, high availability, and seamless scalability.
 
-##### Order of Execution
-* Order of Operations for Executing Scripts
-  * Execute the **insertpg.sql** script to initiate data insertion
-  * Execute the alloyDB-query.sh script concurrently in a separate terminal window.
-  * Concurrently with the execution of both scripts, it is recommended to initiate the Python script obtained from the aforementioned GitHub repository. This      action will facilitate the creation of a query_results table within AlloyDB, which will subsequently be utilized by Looker for the purpose of
-    dashboarding the results.
-    `alloyDB-demo$ for i in {1..10};do echo $i; python alloy-table-looker.py;sleep 4;done`
+Think of it as PostgreSQL, significantly enhanced for performance and manageability.
 
-### Looker Dashboard
-* Looker Setup
-<img width="569" alt="Screenshot 2024-12-11 at 21 52 29" src="https://github.com/user-attachments/assets/4534a758-0754-47f8-a4fb-57be8d8d02b4">
+### Key Feature: Integrated Columnar Engine
+
+AlloyDB features an integrated columnar engine designed to dramatically accelerate analytical query performance. Here's how it works:
+
+* **Efficient Data Storage:** Unlike traditional row-based storage, the columnar engine stores all values for a single column contiguously. This drastically reduces the I/O required for analytical queries that typically scan many rows but only need data from a few specific columns.
+* **Intelligent Caching:** Frequently accessed data is automatically kept in a fast, in-memory cache.
+* **ML-Powered Optimization:** Machine learning algorithms automatically determine which data benefits most from the columnar format and caching, eliminating the need for manual tuning.
+* **Seamless Integration:** The columnar engine works transparently alongside AlloyDB's standard PostgreSQL query processing. You continue to use standard SQL, and AlloyDB automatically routes queries (or parts of queries) to the columnar engine whenever it provides a performance benefit.
+
+## Purpose of this Demo
+
+This demonstration showcases two key capabilities of AlloyDB:
+
+1.  **Read Pool Isolation:** How utilizing AlloyDB Read Pools allows heavy analytical queries to run without impacting the write performance of the primary instance.
+2.  **Columnar Engine Acceleration:** How the integrated columnar engine significantly speeds up analytical queries, leading to a better user experience for data analysis tasks.
+
+## Prerequisites
+
+* An AlloyDB instance provisioned using the setup found at: [https://github.com/jk-kashe/gcp-database-demos/](https://github.com/jk-kashe/gcp-database-demos/)
+* Access to the `alloydb-client` VM (or a similarly configured environment) associated with your AlloyDB instance.
+* The IP address of your AlloyDB instance's **Read Pool**.
+* Three separate terminal/console sessions connected to the `alloydb-client`.
+
+## Setup Instructions
+
+1.  Connect to your `alloydb-client` environment using the provided script:
+    ```bash
+    ./gcp-database-demos/alloydb/cymbal-air/alloydb-client.sh
+    ```
+
+2.  In your `alloydb-client` session, create a directory for the demo, clone the repository, and navigate into it:
+    ```bash
+    # Note: 'mk demo' might be a custom alias in your environment.
+    # If not, use 'mkdir demo':
+    # mkdir demo
+    mk demo
+    cd demo
+    git clone [https://github.com/jk-kashe/AlloyDB-Demo](https://github.com/jk-kashe/AlloyDB-Demo)
+    cd AlloyDB-Demo
+    ```
+
+3.  Make the demo scripts executable:
+    ```bash
+    chmod +x *.sh
+    ```
+
+4.  Run the initial setup script:
+    ```bash
+    ./setup.sh
+    ```
+
+## Demonstrating Read Pool Benefits
+
+**Goal:** Show how read traffic impacts the primary instance and how a read pool mitigates this.
+
+**(Requires 3 separate console sessions connected to `alloydb-client`, all within the `AlloyDB-Demo` directory)**
+
+Note: run below line to init your shell(s)
+
+```bash
+~/source pgauth.env
+'''
+
+1.  **Console 1 (Start Write Load):**
+    * **Action:** Begin simulating continuous data ingestion (e.g., new orders) by running parallel insert workers against the primary instance.
+    ```bash
+    ./parallel.sh ./insert.sh
+    ```
+    * *Keep this running in the background.*
+
+2.  **Console 2 (Benchmark Writes - Baseline):**
+    * **Action:** Start the benchmark script to measure the current insert rate on the primary instance.
+    ```bash
+    ./insert_benchmark.sh
+    ```
+    * **Observe:** Note the initial median rows added per second. This is your baseline write performance.
+
+3.  **Console 3 (Start Read Load - *Against Primary*):**
+    * **Action:** Simulate multiple concurrent analytical clients querying the *primary* instance directly.
+    ```bash
+    # Ensure PGHOST is pointing to the PRIMARY instance IP (default after setup)
+    ./parallel.sh ./alloyDB-query.sh
+    ```
+    * **Explain:** "We are now running analytical queries (like those potentially generated by BI tools or even GenAI applications) directly against the primary database node, simulating concurrent users." *(You can show the `alloyDB-query.sh` content if needed).*
+
+4.  **Console 2 (Benchmark Writes - Impact):**
+    * **Observe:** Watch the median rows added per second. You should see a significant drop in performance.
+    * *(Optional: Ctrl+C and restart `./insert_benchmark.sh` to get more current numbers as performance degrades).*
+    * **Highlight:** "Notice how the write performance has dropped significantly. The primary instance is now struggling to handle both the inserts and the heavy analytical queries concurrently."
+
+5.  **Console 3 (Redirect Read Load - *To Read Pool*):**
+    * **Action:** Stop the analytical query load (Ctrl+C). Then, redirect the query load to the dedicated Read Pool instance by setting the `PGHOST` environment variable.
+    * **Replace `YOUR_READ_POOL_IP` with the actual IP address of your AlloyDB Read Pool.**
+    ```bash
+    # Stop the previous command (Ctrl+C)
+    export PGHOST="YOUR_READ_POOL_IP"
+    ./parallel.sh ./alloyDB-query.sh
+    ```
+    * **Explain:** "We've stopped hitting the primary instance with reads. Now, we're running the exact same analytical queries, but directing them to a separate AlloyDB Read Pool instance, which is designed for this purpose."
+
+6.  **Console 2 (Benchmark Writes - Recovery):**
+    * **Observe:** Watch the median rows added per second again. Performance should recover and climb back towards the initial baseline observed in Step 2.
+    * *(Optional: Ctrl+C and restart `./insert_benchmark.sh` to see the recovered performance clearly).*
+    * **Highlight:** "As you can see, the write performance on the primary instance has recovered. By offloading the read-heavy analytical workload to the Read Pool, we've freed up the primary instance to focus on its critical task – ingesting new data efficiently."
+
+## Demonstrating Columnar Engine Benefits
+
+TBD
