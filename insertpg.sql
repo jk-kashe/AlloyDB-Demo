@@ -12,7 +12,7 @@ BEGIN
     commit;
     max_rows := max_rows - 1;
     RAISE NOTICE 'new order#: %', lo_orderkey;
-    PERFORM pg_sleep(1);
+    -- PERFORM pg_sleep(1);
   END LOOP;
 END
 $do$;
