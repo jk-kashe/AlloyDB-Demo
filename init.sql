@@ -5,6 +5,8 @@ DECLARE
   -- but we need the sequence name in a variable for EXECUTE format.
   v_seq_name TEXT := 'lineorder_lo_linenumber_seq';
 BEGIN
+  --1. this is for insert demo to be isolated
+  create table lineorder2 as select * from lineorder;
   RAISE NOTICE 'Checking current row count for lineorder...';
 
   -- 1. Calculate the desired starting value for the sequence
@@ -26,6 +28,9 @@ BEGIN
   -- 3. Alter the table to use the sequence for the default value of lo_linenumber
   -- This command can be run directly now that the sequence exists.
   ALTER TABLE lineorder
+  ALTER COLUMN lo_orderkey SET DEFAULT nextval('lineorder_lo_linenumber_seq');
+  --for inserts demo
+  ALTER TABLE lineorder2
   ALTER COLUMN lo_orderkey SET DEFAULT nextval('lineorder_lo_linenumber_seq');
 
   RAISE NOTICE 'Set default for lineorder.lo_linenumber to use sequence %.', v_seq_name;
