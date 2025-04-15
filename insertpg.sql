@@ -106,7 +106,7 @@ BEGIN
     v_lo_ordertotalprice := round((v_lo_extendedprice * (random() * 10 + v_lo_linenumber))::numeric, 2);
 
     -- 4. Perform the INSERT (same as before)
-    INSERT INTO lineorder (
+    INSERT INTO lineorder2 (
       lo_linenumber, lo_custkey, lo_partkey, lo_suppkey, lo_orderdate,
       lo_orderpriority, lo_shippriority, lo_quantity, lo_extendedprice,
       lo_ordertotalprice, lo_discount, lo_revenue, lo_supplycost, lo_tax,
