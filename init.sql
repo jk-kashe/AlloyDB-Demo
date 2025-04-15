@@ -26,7 +26,7 @@ BEGIN
   -- 3. Alter the table to use the sequence for the default value of lo_linenumber
   -- This command can be run directly now that the sequence exists.
   ALTER TABLE lineorder
-  ALTER COLUMN lo_linenumber SET DEFAULT nextval('lineorder_lo_linenumber_seq');
+  ALTER COLUMN lo_orderkey SET DEFAULT nextval('lineorder_lo_linenumber_seq');
 
   RAISE NOTICE 'Set default for lineorder.lo_linenumber to use sequence %.', v_seq_name;
 
