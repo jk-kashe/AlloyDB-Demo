@@ -1,7 +1,7 @@
 DO $$
 DECLARE
     -- === Configuration ===
-    v_table_name TEXT := 'lineorder';       -- <<< Your table name here
+    v_table_name TEXT := 'lineorder2';       -- <<< Your table name here
     num_iterations INT := 12;               -- <<< Number of measurement intervals to run
     sleep_interval_sec NUMERIC := 5;        -- <<< Duration of each interval (seconds)
 
@@ -37,7 +37,7 @@ BEGIN
         BEGIN
             SELECT count(*), clock_timestamp()
             INTO v_count1, v_ts1
-            FROM lineorder; -- Using configured table name
+            FROM lineorder2; -- Using configured table name
         EXCEPTION
             WHEN OTHERS THEN
                 RAISE WARNING 'Failed to get initial count for interval %: %', i, SQLERRM;
@@ -51,7 +51,7 @@ BEGIN
         BEGIN
             SELECT count(*), clock_timestamp()
             INTO v_count2, v_ts2
-            FROM lineorder; -- Using configured table name
+            FROM lineorder2; -- Using configured table name
         EXCEPTION
             WHEN OTHERS THEN
                 RAISE WARNING 'Failed to get final count for interval %: %', i, SQLERRM;
