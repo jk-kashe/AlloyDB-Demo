@@ -17,13 +17,16 @@ for arg in "$@"
 do
     if [ "$arg" == "--ce_recommend" ]; then
         RUN_RECOMMEND_QUERY=true
-        break # Found the flag, no need to check further args for this simple case
+    fi
+    if [ "$arg" == "--reset" ]; then
+        RESET=true
     fi
 done
 
 echo "--- Settings ---"
 echo "Iterations:           $NUM_ITERATIONS"
 echo "Stats Interval:       $STATS_UPDATE_INTERVAL"
+echo "Reset columnar engine recommend:  $RESET (Set via --reset)"
 echo "Run columnar engine recommend query:  $RUN_RECOMMEND_QUERY (Set via --ce_recommend flag)"
 echo "----------------"
 
@@ -41,9 +44,10 @@ echo "Storing durations in: $tmpfile"
 # Using EXIT trap is generally sufficient and cleaner
 trap 'echo "Cleaning up temporary file..."; rm -f "$tmpfile"' EXIT
 
-
-psql -U "$DB_USER" -d "$DB_NAME" -c "select google_columnar_engine_drop('lineorder')" -o rec.out 
-psql -U "$DB_USER" -d "$DB_NAME" -c "select google_columnar_engine_reset_recommendation(drop_columns => true)" -o rec.out 
+if [ "$RUN_RECOMMEND_QUERY" == "true" ] || [ "$RESET" == "true" ]; then
+    psql -U "$DB_USER" -d "$DB_NAME" -c "select google_columnar_engine_drop('lineorder')" -o rec.out 
+    psql -U "$DB_USER" -d "$DB_NAME" -c "select google_columnar_engine_reset_recommendation(drop_columns => true)" -o rec.out 
+fi
 
 sleep 2
 
