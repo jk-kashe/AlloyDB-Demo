@@ -22,6 +22,16 @@ This demonstration showcases two key capabilities of AlloyDB:
 1.  **Read Pool Isolation:** How utilizing AlloyDB Read Pools allows heavy analytical queries to run without impacting the write performance of the primary instance.
 2.  **Columnar Engine Acceleration:** How the integrated columnar engine significantly speeds up analytical queries, leading to a better user experience for data analysis tasks.
 
+---
+
+***Important Note on Demo Scope:***
+
+*This demo focuses on illustrating Read Pool isolation under write load and the analytical query acceleration provided by the Columnar Engine.*
+*Demonstrating the Columnar Engine's performance characteristics during simultaneous, heavy insert operations *into the exact same table* being queried analytically is **not** currently in the scope of this specific demo.*
+*To keep the demonstration clear and focused, the write load script (`insert.sh`) targets a separate table (e.g., `lineorder2`), while the analytical queries (`alloyDB-query.sh`) primarily run against a larger, pre-populated table.*
+
+---
+
 ## Prerequisites
 
 * An AlloyDB instance provisioned using the setup found at: [https://github.com/jk-kashe/gcp-database-demos/](https://github.com/jk-kashe/gcp-database-demos/)
@@ -113,4 +123,40 @@ Note: run below line to init your shell(s)
 
 ## Demonstrating Columnar Engine Benefits
 
-TBD
+**Goal:** Show how the Columnar Engine improves analytical query performance against the main data table.
+
+**(Continue using Console 3, which should still have `PGHOST` set to your Read Pool IP)**
+
+1.  **Console 3 (Run Query - Baseline on Read Pool):**
+    * **Action:** If the parallel query script is still running from the previous step, stop it (Ctrl+C). Now, run the *single* analytical query script against the main table (e.g., `lineorder`) to measure its baseline performance on the read pool.
+    ```bash
+    # Ensure PGHOST is still set to YOUR_READ_POOL_IP
+    ./alloyDB-query.sh
+    ```
+    * **Observe:** Note the "Median Response Time" reported by the script.
+    * **Explain:** "Okay, we've isolated our reads to the Read Pool, which protects the primary, but look at this query response time against our main table. For an interactive dashboard or application, this could lead to a poor user experience. How can we make this faster?"
+
+2.  **Console 3 (Identify Columnar Engine Candidates):**
+    * **Action:** Use AlloyDB's built-in advisor to recommend which columns in the queried table (`lineorder`) would benefit from being added to the columnar store.
+    ```bash
+    # Option 1: Using the script flag (if implemented in alloyDB-query.sh)
+    ./alloyDB-query.sh --ce_recommend
+
+    # Option 2: Running the SQL command directly (e.g. in psql/AlloyDB Studio)
+    # psql -c "SELECT google_columnar_engine_recommend('lineorder');"
+    ```
+    * **Explain:** "AlloyDB includes tools to help us optimize. This function analyzes query patterns and recommends columns that are good candidates for the Columnar Engine for the specified table."
+
+3.  **Console 3 (Apply Recommendations / Verify Setup):**
+    * **Explain:** "Based on these recommendations, we would typically add the suggested columns to the Columnar Engine using `ALTER TABLE lineorder ADD COLUMN column_name WITH (columnar = true);`. In this demo environment, the `./setup.sh` script likely already added the relevant columns from the `lineorder` table to the columnar store based on the expected query patterns. So, the necessary columns should already be managed by the Columnar Engine."
+    * *(Note: If setup didn't add them, you would need an explicit step here or another script `enable_ce.sh` to run the `ALTER TABLE` commands based on the recommendations).*
+
+4.  **Console 3 (Run Query - With Columnar Engine):**
+    * **Action:** Re-run the same single analytical query script as in Step 1.
+    ```bash
+    # Ensure PGHOST is still set to YOUR_READ_POOL_IP
+    ./alloyDB-query.sh
+    ```
+    * **Observe:** Note the "Median Response Time" again. It should be significantly lower (faster) than the baseline measured in Step 1.
+    * **Highlight:** "Look at the difference! By leveraging the Columnar Engine for the analytical query (which AlloyDB does automatically when beneficial for columns added to the store), the response time is drastically reduced. This demonstrates how the Columnar Engine accelerates analytics and improves user experience, without requiring changes to the SQL query itself."
+
